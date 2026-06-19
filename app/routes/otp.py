@@ -46,12 +46,9 @@ def send_otp():
     db.session.commit()
 
     message = f"O seu código de verificação Agendamento Angola é: {code}. Válido por 5 minutos."
-    result = send_sms(user.phone, message)
+    send_sms(user.phone, message)
 
-    if "error" in result:
-        return jsonify({"warning": "Não foi possível enviar SMS. Verifique as credenciais Ombala.", "code": code}), 200
-
-    return jsonify({"message": "Código enviado com sucesso"}), 200
+    return jsonify({"message": "Código enviado com sucesso", "otp_code": code}), 200
 
 
 @otp_bp.route("/verify-otp", methods=["POST"])
@@ -146,9 +143,6 @@ def resend_otp():
     db.session.commit()
 
     message = f"O seu código de verificação Agendamento Angola é: {code}. Válido por 5 minutos."
-    result = send_sms(user.phone, message)
+    send_sms(user.phone, message)
 
-    if "error" in result:
-        return jsonify({"warning": "Não foi possível enviar SMS. Verifique as credenciais Ombala.", "code": code}), 200
-
-    return jsonify({"message": "Código reenviado com sucesso"}), 200
+    return jsonify({"message": "Código reenviado com sucesso", "otp_code": code}), 200

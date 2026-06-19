@@ -76,12 +76,10 @@ def register():
     code = user.generate_otp()
     db.session.commit()
     message = f"O seu código de verificação Agendamento Angola é: {code}. Válido por 5 minutos."
-    result = send_sms(phone, message)
+    send_sms(phone, message)
 
     resp = user.to_dict()
-    if "error" in result:
-        resp["sms_warning"] = "Não foi possível enviar SMS. Verifique as credenciais Ombala."
-        resp["otp_code"] = code
+    resp["otp_code"] = code
 
     return jsonify(resp), 201
 
