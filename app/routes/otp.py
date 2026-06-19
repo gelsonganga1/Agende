@@ -19,9 +19,9 @@ def send_otp():
         schema:
           type: object
           properties:
-            email:
+            phone:
               type: string
-              example: joao@email.com
+              example: 921939411
     responses:
       200:
         description: Código enviado (pode conter warning se SMS não foi entregue)
@@ -34,16 +34,13 @@ def send_otp():
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
 
-    email = data.get("email")
-    if not email:
-        return jsonify({"error": "Email é obrigatório"}), 400
+    phone = data.get("phone")
+    if not phone:
+        return jsonify({"error": "Telefone é obrigatório"}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(phone=phone).first()
     if not user:
         return jsonify({"error": "Utilizador não encontrado"}), 404
-
-    if not user.phone:
-        return jsonify({"error": "Utilizador não tem telefone registado"}), 400
 
     code = user.generate_otp()
     db.session.commit()
@@ -70,9 +67,9 @@ def verify_otp():
         schema:
           type: object
           properties:
-            email:
+            phone:
               type: string
-              example: joao@email.com
+              example: 921939411
             code:
               type: string
               example: 483920
@@ -88,13 +85,13 @@ def verify_otp():
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
 
-    email = data.get("email")
+    phone = data.get("phone")
     code = data.get("code")
 
-    if not email or not code:
-        return jsonify({"error": "Email e código são obrigatórios"}), 400
+    if not phone or not code:
+        return jsonify({"error": "Telefone e código são obrigatórios"}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(phone=phone).first()
     if not user:
         return jsonify({"error": "Utilizador não encontrado"}), 404
 
@@ -122,9 +119,9 @@ def resend_otp():
         schema:
           type: object
           properties:
-            email:
+            phone:
               type: string
-              example: joao@email.com
+              example: 921939411
     responses:
       200:
         description: Código reenviado
@@ -137,16 +134,13 @@ def resend_otp():
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
 
-    email = data.get("email")
-    if not email:
-        return jsonify({"error": "Email é obrigatório"}), 400
+    phone = data.get("phone")
+    if not phone:
+        return jsonify({"error": "Telefone é obrigatório"}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(phone=phone).first()
     if not user:
         return jsonify({"error": "Utilizador não encontrado"}), 404
-
-    if not user.phone:
-        return jsonify({"error": "Utilizador não tem telefone registado"}), 400
 
     code = user.generate_otp()
     db.session.commit()

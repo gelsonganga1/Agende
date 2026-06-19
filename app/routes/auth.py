@@ -12,7 +12,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 def register():
     """
     Registo de novo utilizador
-    Cria uma conta com role "client". Se o telefone for fornecido, envia um código OTP por SMS.
+    Cria uma conta com role "client". Envia um código OTP por SMS.
     O utilizador fica inativo até verificar o telefone.
     ---
     parameters:
@@ -25,44 +25,47 @@ def register():
             name:
               type: string
               example: João Silva
-            email:
-              type: string
-              example: joao@email.com
-            password:
-              type: string
-              example: minha-senha
             phone:
               type: string
               example: 921939411
+            password:
+              type: string
+              example: minha-senha
+            email:
+              type: string
+              example: joao@email.com
     responses:
       201:
         description: Utilizador criado com sucesso
       400:
         description: Dados inválidos
       409:
-        description: Email já registado
+        description: Telefone ou email já registado
     """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
 
     name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
     phone = data.get("phone")
+    password = data.get("password")
+    email = data.get("email")
 
-    if not name or not email or not password:
-        return jsonify({"error": "Nome, email e password são obrigatórios"}), 400
+    if not name or not phone or not password:
+        return jsonify({"error": "Nome, telefone e password são obrigatórios"}), 400
 
-    if User.query.filter_by(email=email).first():
+    if User.query.filter_by(phone=phone).first():
+        return jsonify({"error": "Telefone já registado"}), 409
+
+    if email and User.query.filter_by(email=email).first():
         return jsonify({"error": "Email já registado"}), 409
 
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
     user = User(
         name=name,
-        email=email,
-        password=hashed.decode("utf-8"),
         phone=phone,
+        password=hashed.decode("utf-8"),
+        email=email or None,
         role="client",
         is_active=False,
         is_phone_verified=False,
@@ -70,13 +73,17 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    if phone:
-        code = user.generate_otp()
-        db.session.commit()
-        message = f"O seu código de verificação Agendamento Angola é: {code}. Válido por 5 minutos."
-        send_sms(phone, message)
+    code = user.generate_otp()
+    db.session.commit()
+    message = f"O seu código de verificação Agendamento Angola é: {code}. Válido por 5 minutos."
+    result = send_sms(phone, message)
 
-    return jsonify(user.to_dict()), 201
+    resp = user.to_dict()
+    if "error" in result:
+        resp["sms_warning"] = "Não foi possível enviar SMS. Verifique as credenciais Ombala."
+        resp["otp_code"] = code
+
+    return jsonify(resp), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -84,6 +91,7 @@ def login():
     """
     Autenticação do utilizador
     Retorna tokens JWT (access + refresh) se as credenciais forem válidas.
+    Aceita email ou telefone como login.
     Se o telefone não estiver verificado, retorna 403 com requires_otp=true.
     ---
     parameters:
@@ -93,7 +101,7 @@ def login():
         schema:
           type: object
           properties:
-            email:
+            login:
               type: string
               example: joao@email.com
             password:
@@ -111,13 +119,15 @@ def login():
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
 
-    email = data.get("email")
+    login = data.get("login") or data.get("email") or data.get("phone")
     password = data.get("password")
 
-    if not email or not password:
-        return jsonify({"error": "Email e password são obrigatórios"}), 400
+    if not login or not password:
+        return jsonify({"error": "Login e password são obrigatórios"}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter(
+        (User.email == login) | (User.phone == login)
+    ).first()
     if not user:
         return jsonify({"error": "Credenciais inválidas"}), 401
 
