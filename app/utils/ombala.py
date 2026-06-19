@@ -4,16 +4,17 @@ import requests
 from flask import current_app
 
 OMBALA_API_URL = "https://api.useombala.ao/v1/messages"
-COUNTRY_CODE = "+244"
 
 
 def _format_phone(phone: str) -> str:
     digits = re.sub(r"\D", "", phone)
+    if digits.startswith("+244"):
+        return digits[4:]
+    if digits.startswith("00244"):
+        return digits[5:]
     if digits.startswith("244"):
-        return f"+{digits}"
-    if digits.startswith("00"):
-        return f"+{digits[2:]}"
-    return f"{COUNTRY_CODE}{digits}"
+        return digits[3:]
+    return digits
 
 
 def send_sms(to: str, message: str) -> dict:
