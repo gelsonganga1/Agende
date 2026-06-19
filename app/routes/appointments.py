@@ -8,6 +8,15 @@ appointments_bp = Blueprint("appointments", __name__, url_prefix="/api/appointme
 @appointments_bp.route("", methods=["GET"])
 @jwt_required()
 def list_appointments():
+    """
+    Listar todos os agendamentos
+    ---
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Lista de agendamentos
+    """
     appointments = Appointment.query.all()
     return jsonify([a.to_dict() for a in appointments]), 200
 
@@ -15,6 +24,22 @@ def list_appointments():
 @appointments_bp.route("/<int:appt_id>", methods=["GET"])
 @jwt_required()
 def get_appointment(appt_id):
+    """
+    Obter um agendamento pelo ID
+    ---
+    security:
+      - Bearer: []
+    parameters:
+      - name: appt_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Dados do agendamento
+      404:
+        description: Agendamento não encontrado
+    """
     appointment = Appointment.query.get_or_404(appt_id)
     return jsonify(appointment.to_dict()), 200
 
@@ -22,6 +47,38 @@ def get_appointment(appt_id):
 @appointments_bp.route("", methods=["POST"])
 @jwt_required()
 def create_appointment():
+    """
+    Criar um novo agendamento
+    ---
+    security:
+      - Bearer: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            service_id:
+              type: integer
+              example: 1
+            department_id:
+              type: integer
+              example: 1
+            date:
+              type: string
+              example: 2026-07-15
+            time:
+              type: string
+              example: 09:30
+            notes:
+              type: string
+    responses:
+      201:
+        description: Agendamento criado
+      400:
+        description: Dados inválidos
+    """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
@@ -49,6 +106,36 @@ def create_appointment():
 @appointments_bp.route("/<int:appt_id>", methods=["PUT"])
 @jwt_required()
 def update_appointment(appt_id):
+    """
+    Actualizar um agendamento
+    ---
+    security:
+      - Bearer: []
+    parameters:
+      - name: appt_id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            date:
+              type: string
+            time:
+              type: string
+            status:
+              type: string
+            notes:
+              type: string
+    responses:
+      200:
+        description: Agendamento actualizado
+      400:
+        description: Dados inválidos
+    """
     appointment = Appointment.query.get_or_404(appt_id)
     data = request.get_json()
     if not data:
@@ -70,6 +157,20 @@ def update_appointment(appt_id):
 @appointments_bp.route("/<int:appt_id>", methods=["DELETE"])
 @jwt_required()
 def delete_appointment(appt_id):
+    """
+    Remover um agendamento
+    ---
+    security:
+      - Bearer: []
+    parameters:
+      - name: appt_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      204:
+        description: Agendamento removido
+    """
     appointment = Appointment.query.get_or_404(appt_id)
     db.session.delete(appointment)
     db.session.commit()

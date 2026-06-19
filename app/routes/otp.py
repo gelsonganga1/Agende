@@ -1,13 +1,34 @@
 from flask import Blueprint, request, jsonify
 from ..models import db, User
 from ..utils.ombala import send_sms
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 otp_bp = Blueprint("otp", __name__, url_prefix="/api/users")
 
 
 @otp_bp.route("/send-otp", methods=["POST"])
 def send_otp():
+    """
+    Enviar código OTP por SMS
+    Gera um código de 6 dígitos e envia para o telefone do utilizador via Ombala.
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+              example: joao@email.com
+    responses:
+      200:
+        description: Código enviado (pode conter warning se SMS não foi entregue)
+      400:
+        description: Dados inválidos
+      404:
+        description: Utilizador não encontrado
+    """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
@@ -37,6 +58,31 @@ def send_otp():
 
 @otp_bp.route("/verify-otp", methods=["POST"])
 def verify_otp():
+    """
+    Verificar código OTP
+    Valida o código de 6 dígitos e activa a conta do utilizador.
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+              example: joao@email.com
+            code:
+              type: string
+              example: 483920
+    responses:
+      200:
+        description: Telefone verificado com sucesso
+      400:
+        description: Código inválido ou expirado
+      404:
+        description: Utilizador não encontrado
+    """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
@@ -64,6 +110,28 @@ def verify_otp():
 
 @otp_bp.route("/resend-otp", methods=["POST"])
 def resend_otp():
+    """
+    Reenviar código OTP
+    Gera um novo código e envia novamente por SMS.
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+              example: joao@email.com
+    responses:
+      200:
+        description: Código reenviado
+      400:
+        description: Dados inválidos
+      404:
+        description: Utilizador não encontrado
+    """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados inválidos"}), 400
