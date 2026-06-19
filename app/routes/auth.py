@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from ..models import db, User
+from ..extensions import db
+from ..models import User
 from ..utils.ombala import send_sms
 import bcrypt
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/api/users")
+auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 @auth_bp.route("/register", methods=["POST"])

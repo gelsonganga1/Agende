@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
-from ..models import db, User
+from ..extensions import db
+from ..models import User
 from ..utils.ombala import send_sms
 
-otp_bp = Blueprint("otp", __name__, url_prefix="/api/users")
+otp_bp = Blueprint("otp", __name__, url_prefix="/api/auth")
 
 
 @otp_bp.route("/send-otp", methods=["POST"])

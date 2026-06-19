@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import random
-from . import db
+from ..extensions import db
 
 
 class User(db.Model):

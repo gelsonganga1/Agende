@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from . import db
+from ..extensions import db
 
 
 class Department(db.Model):
