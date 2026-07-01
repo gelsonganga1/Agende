@@ -1,24 +1,27 @@
 import os
 import re
 import threading
+import logging
 import requests
 from flask import current_app
+
+logger = logging.getLogger(__name__)
 
 OMBALA_API_URL = "https://api.useombala.ao/v1/messages"
 
 
 def _format_phone(phone: str) -> str:
     digits = re.sub(r"\D", "", phone)
-    if digits.startswith("+244"):
-        return digits[4:]
-    if digits.startswith("00244"):
-        return digits[5:]
     if digits.startswith("244"):
-        return digits[3:]
-    return digits
+        return digits
+    if digits.startswith("00244"):
+        return "244" + digits[5:]
+    return "244" + digits
 
 
 def _send(to: str, message: str, api_key: str, sender: str) -> None:
+    formatted_to = _format_phone(to)
+    logger.info(f"Sending SMS to {formatted_to}")
     headers = {
         "Authorization": f"Token {api_key}",
         "Content-Type": "application/json",
@@ -26,17 +29,18 @@ def _send(to: str, message: str, api_key: str, sender: str) -> None:
     payload = {
         "message": message,
         "from": sender or "AGENDAMENTO",
-        "to": _format_phone(to),
+        "to": formatted_to,
     }
     try:
         resp = requests.post(OMBALA_API_URL, json=payload, headers=headers, timeout=30)
-        resp.raise_for_status()
+        if not resp.ok:
+            logger.error(
+                f"Ombala API error: {resp.status_code} | body: {resp.text}"
+            )
+        else:
+            logger.info(f"Ombala API success: {resp.status_code} | body: {resp.text}")
     except requests.RequestException as e:
-        detail = ""
-        if hasattr(e, "response") and e.response is not None:
-            detail = e.response.text
-        import logging
-        logging.getLogger(__name__).error(f"Ombala SMS error: {e} | detail: {detail}")
+        logger.error(f"Ombala SMS request failed: {e}")
 
 
 def send_sms(to: str, message: str) -> dict:

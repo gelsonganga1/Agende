@@ -1,7 +1,17 @@
+import re
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models import User
 from ..utils.ombala import send_sms
+
+
+def _valid_angolan_phone(phone: str) -> bool:
+    digits = re.sub(r"\D", "", phone)
+    if digits.startswith("244"):
+        digits = digits[3:]
+    elif digits.startswith("00244"):
+        digits = digits[5:]
+    return len(digits) == 9 and digits.startswith("9")
 
 otp_bp = Blueprint("otp", __name__, url_prefix="/api/auth")
 
@@ -37,6 +47,9 @@ def send_otp():
     phone = data.get("phone")
     if not phone:
         return jsonify({"error": "Telefone é obrigatório"}), 400
+
+    if not _valid_angolan_phone(phone):
+        return jsonify({"error": "Número de telefone angolano inválido (ex: 921939411)"}), 400
 
     user = User.query.filter_by(phone=phone).first()
     if not user:
@@ -134,6 +147,9 @@ def resend_otp():
     phone = data.get("phone")
     if not phone:
         return jsonify({"error": "Telefone é obrigatório"}), 400
+
+    if not _valid_angolan_phone(phone):
+        return jsonify({"error": "Número de telefone angolano inválido (ex: 921939411)"}), 400
 
     user = User.query.filter_by(phone=phone).first()
     if not user:

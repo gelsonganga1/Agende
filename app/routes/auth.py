@@ -1,9 +1,19 @@
+import re
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import User
 from ..utils.ombala import send_sms
 import bcrypt
+
+
+def _valid_angolan_phone(phone: str) -> bool:
+    digits = re.sub(r"\D", "", phone)
+    if digits.startswith("244"):
+        digits = digits[3:]
+    elif digits.startswith("00244"):
+        digits = digits[5:]
+    return len(digits) == 9 and digits.startswith("9")
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -53,6 +63,9 @@ def register():
 
     if not name or not phone or not password:
         return jsonify({"error": "Nome, telefone e password são obrigatórios"}), 400
+
+    if not _valid_angolan_phone(phone):
+        return jsonify({"error": "Número de telefone angolano inválido (ex: 921939411)"}), 400
 
     if User.query.filter_by(phone=phone).first():
         return jsonify({"error": "Telefone já registado"}), 409
