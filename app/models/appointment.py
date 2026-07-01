@@ -8,7 +8,7 @@ class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey("services.id"), nullable=False)
-    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"), nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"), nullable=True)
     date = db.Column(db.String(20), nullable=False)
     time = db.Column(db.String(10), nullable=False)
     status = db.Column(

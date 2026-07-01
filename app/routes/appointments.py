@@ -86,7 +86,7 @@ def create_appointment():
 
     user_id = get_jwt_identity()
 
-    required = ["service_id", "department_id", "date", "time"]
+    required = ["service_id", "date", "time"]
     for field in required:
         if field not in data:
             return jsonify({"error": f"{field} é obrigatório"}), 400
@@ -94,7 +94,7 @@ def create_appointment():
     appointment = Appointment(
         user_id=int(user_id),
         service_id=data["service_id"],
-        department_id=data["department_id"],
+        department_id=data.get("department_id"),
         date=data["date"],
         time=data["time"],
         notes=data.get("notes"),
