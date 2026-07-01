@@ -75,15 +75,15 @@ def create_service():
         description: Dados inválidos
     """
     data = request.get_json()
-    if not data or not data.get("name") or not data.get("department_id"):
-        return jsonify({"error": "Nome e department_id são obrigatórios"}), 400
+    if not data or not data.get("name"):
+        return jsonify({"error": "Nome é obrigatório"}), 400
 
     service = Service(
         name=data["name"],
         description=data.get("description"),
         duration=data.get("duration"),
         price=data.get("price"),
-        department_id=data["department_id"],
+        department_id=data.get("department_id"),
     )
     db.session.add(service)
     db.session.commit()

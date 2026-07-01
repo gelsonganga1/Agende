@@ -11,7 +11,7 @@ class Service(db.Model):
     duration = db.Column(db.Integer, nullable=True)
     price = db.Column(db.Float, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"), nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey("departments.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
