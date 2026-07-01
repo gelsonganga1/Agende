@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
-from ..models import Appointment
+from ..models import Appointment, User, Service
+from ..utils.ombala import send_sms
 
 appointments_bp = Blueprint("appointments", __name__, url_prefix="/api/appointments")
 
@@ -116,6 +117,13 @@ def create_appointment():
     )
     db.session.add(appointment)
     db.session.commit()
+
+    user = User.query.get(int(user_id))
+    service = Service.query.get(data["service_id"])
+    if user and service and user.phone:
+        msg = f"Confirmacao: Servico '{service.name}' agendado para {data['date']} as {data['time']}."
+        send_sms(user.phone, msg)
+
     return jsonify(appointment.to_dict()), 201
 
 
