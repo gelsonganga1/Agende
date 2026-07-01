@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from ..extensions import db
-from ..models import Department
+from ..models import Department, Appointment
 
 departments_bp = Blueprint("departments", __name__, url_prefix="/api/departments")
 
@@ -81,6 +81,28 @@ def create_department():
     db.session.add(department)
     db.session.commit()
     return jsonify(department.to_dict()), 201
+
+
+@departments_bp.route("/<int:dept_id>/appointments", methods=["GET"])
+@jwt_required()
+def department_appointments(dept_id):
+    """
+    Listar agendamentos de um departamento
+    ---
+    security:
+      - Bearer: []
+    parameters:
+      - name: dept_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Lista de agendamentos do departamento
+    """
+    department = Department.query.get_or_404(dept_id)
+    appointments = Appointment.query.filter_by(department_id=dept_id).order_by(Appointment.date, Appointment.time).all()
+    return jsonify([a.to_dict() for a in appointments]), 200
 
 
 @departments_bp.route("/<int:dept_id>", methods=["PUT"])
