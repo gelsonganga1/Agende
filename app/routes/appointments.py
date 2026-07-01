@@ -91,6 +91,21 @@ def create_appointment():
         if field not in data:
             return jsonify({"error": f"{field} é obrigatório"}), 400
 
+    existing = Appointment.query.filter_by(
+        user_id=int(user_id),
+        service_id=data["service_id"],
+    ).filter(Appointment.status != "cancelled").first()
+    if existing:
+        return jsonify({"error": "Já tens um agendamento para este serviço"}), 409
+
+    slot_taken = Appointment.query.filter_by(
+        service_id=data["service_id"],
+        date=data["date"],
+        time=data["time"],
+    ).filter(Appointment.status != "cancelled").first()
+    if slot_taken:
+        return jsonify({"error": "Este horário já está reservado"}), 409
+
     appointment = Appointment(
         user_id=int(user_id),
         service_id=data["service_id"],
